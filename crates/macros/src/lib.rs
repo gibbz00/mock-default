@@ -25,6 +25,7 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
     match self_definition_result {
         Ok(self_definition) => {
             quote! {
+                #[cfg(test)]
                 impl ::mock_default::Mock for #identifier {
                     fn mock() -> Self {
                         #self_definition

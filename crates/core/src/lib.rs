@@ -14,4 +14,8 @@ impl<T: Mock> Mock for Option<T> {
     }
 }
 
+impl Mock for () {
+    fn mock() -> Self {}
+}
+
 pub use mock_default_macros::Mock;

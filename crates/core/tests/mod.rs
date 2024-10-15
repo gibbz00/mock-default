@@ -23,7 +23,7 @@ fn error_ui() {
 }
 
 #[test]
-fn struct_with_named_fields() {
+fn field_struct() {
     #[derive(Mock, Debug, PartialEq)]
     struct Foo {
         bar: Bar,
@@ -36,11 +36,19 @@ fn struct_with_named_fields() {
 }
 
 #[test]
-fn struct_with_unnamed_fields() {
+fn tuple_struct() {
     #[derive(Mock, Debug, PartialEq)]
     struct Foo(Bar, Baz);
 
     let expected = Foo(Bar(10), Baz(20));
 
     assert_eq!(expected, Foo::mock())
+}
+
+#[test]
+fn unit_struct() {
+    #[derive(Mock, Debug, PartialEq)]
+    struct Foo;
+
+    assert_eq!(Foo, Foo::mock())
 }

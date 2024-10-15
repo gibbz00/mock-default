@@ -18,7 +18,8 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
     let self_definition_result = match type_definition.data {
         Data::Struct(data_struct) => derive_struct(data_struct),
         Data::Enum(data_enum) => derive_enum(data_enum),
-        Data::Union(_) => todo!(),
+        // TODO:
+        Data::Union(data_union) => Err(syn::Error::new(data_union.union_token.span, "union types not supported")),
     };
 
     match self_definition_result {
@@ -34,23 +35,6 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
         Err(err) => err.to_compile_error(),
     }
     .into()
-}
-
-mod fields {
-    use super::*;
-
-    pub fn named(named_fields: FieldsNamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
-        let field_names = named_fields
-            .named
-            .into_iter()
-            .map(|field| field.ident.expect("encountered named field without an identifier"));
-
-        field_names.map(|field_name| quote! { #field_name: ::mock_default::Mock::mock() })
-    }
-
-    pub fn tuple(tuple_fields: syn::FieldsUnnamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
-        tuple_fields.unnamed.into_iter().map(|_| quote! { ::mock_default::Mock::mock() })
-    }
 }
 
 fn derive_struct(data_struct: syn::DataStruct) -> syn::Result<proc_macro2::TokenStream> {
@@ -124,4 +108,21 @@ fn derive_enum(data_enum: syn::DataEnum) -> syn::Result<proc_macro2::TokenStream
             }
         }
     })
+}
+
+mod fields {
+    use super::*;
+
+    pub fn named(named_fields: FieldsNamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
+        let field_names = named_fields
+            .named
+            .into_iter()
+            .map(|field| field.ident.expect("encountered named field without an identifier"));
+
+        field_names.map(|field_name| quote! { #field_name: ::mock_default::Mock::mock() })
+    }
+
+    pub fn tuple(tuple_fields: syn::FieldsUnnamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
+        tuple_fields.unnamed.into_iter().map(|_| quote! { ::mock_default::Mock::mock() })
+    }
 }

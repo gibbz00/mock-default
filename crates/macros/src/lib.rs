@@ -2,10 +2,10 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed};
+use syn::{parse_macro_input, spanned::Spanned, Data, DeriveInput, Fields, FieldsNamed};
 
 /// Derives [`Mock`] for a struct if all of its fields implement `Mock`.
-#[proc_macro_derive(Mock, attributes(mock))]
+#[proc_macro_derive(Mock, attributes(mock, mock_default))]
 pub fn derive_mock(token_stream: TokenStream) -> TokenStream {
     derive_mock_impl(token_stream)
 }
@@ -14,6 +14,11 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
     let type_definition = parse_macro_input!(token_stream as DeriveInput);
 
     let identifier = type_definition.ident;
+
+    let cfg_scope = match cfg_scope(type_definition.attrs) {
+        Ok(scope) => scope,
+        Err(err) => return err.into_compile_error().into(),
+    };
 
     let self_definition_result = match type_definition.data {
         Data::Struct(data_struct) => derive_struct(data_struct),
@@ -25,7 +30,7 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
     match self_definition_result {
         Ok(self_definition) => {
             quote! {
-                #[cfg(test)]
+                #cfg_scope
                 impl ::mock_default::Mock for #identifier {
                     fn mock() -> Self {
                         #self_definition
@@ -36,6 +41,31 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
         Err(err) => err.to_compile_error(),
     }
     .into()
+}
+
+fn cfg_scope(container_attributes: Vec<syn::Attribute>) -> syn::Result<proc_macro2::TokenStream> {
+    let mut cfg_override: Option<syn::MetaNameValue> = None;
+
+    let mock_attributes = container_attributes.into_iter().filter(|attribute| {
+        matches!(&attribute.meta,
+            syn::Meta::List(meta_list) if meta_list.path.is_ident("mock"))
+    });
+
+    for mock_attribute in mock_attributes {
+        let cfg_args: syn::MetaNameValue = mock_attribute.parse_args()?;
+
+        match &cfg_override {
+            Some(_pre_existing) => {
+                Err(syn::Error::new(cfg_args.span(), "multiple #[cfg], values provided"))?;
+            }
+            None => cfg_override = Some(cfg_args),
+        }
+    }
+
+    Ok(match cfg_override {
+        Some(overrides) => quote! { #[cfg(#overrides)] },
+        None => quote! { #[cfg(test)] },
+    })
 }
 
 fn derive_struct(data_struct: syn::DataStruct) -> syn::Result<proc_macro2::TokenStream> {
@@ -65,7 +95,7 @@ fn derive_enum(data_enum: syn::DataEnum) -> syn::Result<proc_macro2::TokenStream
             .clone()
             .iter()
             .find(|attribute| match &attribute.meta {
-                syn::Meta::Path(path) => path.get_ident().is_some_and(|ident| &ident.to_string() == "mock"),
+                syn::Meta::Path(path) => path.is_ident("mock"),
                 _ => false,
             })
             .map(|_| variant)
@@ -115,15 +145,29 @@ mod fields {
     use super::*;
 
     pub fn named(named_fields: FieldsNamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
-        let field_names = named_fields
+        named_fields
             .named
             .into_iter()
-            .map(|field| field.ident.expect("encountered named field without an identifier"));
-
-        field_names.map(|field_name| quote! { #field_name: ::mock_default::Mock::mock() })
+            .map(|field| {
+                (
+                    field.ident.expect("encountered named field without an identifier"),
+                    mock_or_default(field.attrs),
+                )
+            })
+            .map(|(field_name, mock_or_default)| quote! { #field_name: #mock_or_default })
     }
 
     pub fn tuple(tuple_fields: syn::FieldsUnnamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
-        tuple_fields.unnamed.into_iter().map(|_| quote! { ::mock_default::Mock::mock() })
+        tuple_fields.unnamed.into_iter().map(|field| mock_or_default(field.attrs))
+    }
+
+    fn mock_or_default(field_attributes: Vec<syn::Attribute>) -> proc_macro2::TokenStream {
+        match field_attributes
+            .into_iter()
+            .any(|attribute| matches!(&attribute.meta, syn::Meta::Path(path) if path.is_ident("mock_default")))
+        {
+            true => quote! { Default::default() },
+            false => quote! { ::mock_default::Mock::mock() },
+        }
     }
 }

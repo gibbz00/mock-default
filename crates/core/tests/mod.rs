@@ -1,6 +1,6 @@
 use mock_default::Mock;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 struct Bar(usize);
 impl Mock for Bar {
     fn mock() -> Self {
@@ -26,14 +26,28 @@ mod structs {
     use super::*;
 
     #[test]
-    fn field() {
+    fn named() {
         #[derive(Mock, Debug, PartialEq)]
         struct Foo {
             bar: Bar,
             baz: Baz,
         }
 
-        let expected = Foo { bar: Bar(10), baz: Baz(20) };
+        let expected = Foo { bar: Mock::mock(), baz: Mock::mock() };
+
+        assert_eq!(expected, Foo::mock())
+    }
+
+    #[test]
+    fn named_with_default() {
+        #[derive(Mock, Debug, PartialEq)]
+        struct Foo {
+            #[mock_default]
+            bar: Bar,
+            baz: Baz,
+        }
+
+        let expected = Foo { bar: Default::default(), baz: Mock::mock() };
 
         assert_eq!(expected, Foo::mock())
     }
@@ -43,7 +57,17 @@ mod structs {
         #[derive(Mock, Debug, PartialEq)]
         struct Foo(Bar, Baz);
 
-        let expected = Foo(Bar(10), Baz(20));
+        let expected = Foo(Mock::mock(), Mock::mock());
+
+        assert_eq!(expected, Foo::mock())
+    }
+
+    #[test]
+    fn tuple_with_default() {
+        #[derive(Mock, Debug, PartialEq)]
+        struct Foo(#[mock_default] Bar, Baz);
+
+        let expected = Foo(Default::default(), Mock::mock());
 
         assert_eq!(expected, Foo::mock())
     }
@@ -72,7 +96,23 @@ mod enums {
             },
         }
 
-        assert_eq!(Foo::Baz { baz: Baz(20) }, Foo::mock())
+        assert_eq!(Foo::Baz { baz: Mock::mock() }, Foo::mock())
+    }
+
+    #[test]
+    fn named_with_default() {
+        #[allow(dead_code)]
+        #[derive(Debug, PartialEq, Mock)]
+        enum Foo {
+            #[mock]
+            Buzz {
+                #[mock_default]
+                bar: Bar,
+                baz: Baz,
+            },
+        }
+
+        assert_eq!(Foo::Buzz { bar: Default::default(), baz: Mock::mock() }, Foo::mock())
     }
 
     #[test]
@@ -85,7 +125,19 @@ mod enums {
             Baz,
         }
 
-        assert_eq!(Foo::Bar(Bar(10)), Foo::mock())
+        assert_eq!(Foo::Bar(Mock::mock()), Foo::mock())
+    }
+
+    #[test]
+    fn unnamed_with_default() {
+        #[allow(dead_code)]
+        #[derive(Debug, PartialEq, Mock)]
+        enum Foo {
+            #[mock]
+            Buzz(#[mock_default] Bar, Baz),
+        }
+
+        assert_eq!(Foo::Buzz(Default::default(), Mock::mock()), Foo::mock())
     }
 
     #[test]

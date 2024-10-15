@@ -1,0 +1,5 @@
+error: expected identifier, found keyword `true`
+ --> tests/ui/uknown_container_attribute.rs:2:8
+  |
+2 | #[mock(true)]
+  |        ^^^^

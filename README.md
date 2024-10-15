@@ -5,7 +5,8 @@
 [![license](https://img.shields.io/github/license/gibbz00/damock.svg?style=for-the-badge)](https://github.com/gibbz00/damock/blob/main/LICENSE.md)
 
 ```rust
-# use damock::Mock;
+use damock::Mock;
+
 #[derive(Mock)]
 struct Foo {
     bar: Bar,
@@ -21,9 +22,11 @@ enum Bar {
 }
 ```
 
-Expands into:
+The former derive expands into:
 
 ```rust
+// Derived mock implementations will
+// always be conditionally compiled.
 #[cfg(test)]
 impl Mock for Foo {
     fn mock() -> Self {
@@ -48,12 +51,9 @@ fn computes_data() {
 The `test` compiler configuration may be overridden to something else like so:
 
 ```rust
-# use damock::Mock;
-# #[derive(Mock)]
-# struct Bar(#[mock_default] usize);
-#[derive(Mock)]
+#[derive(damock::Mock)]
 #[mock(feature = "mocks")]
-struct Foo(Bar);
+struct Foo;
 ```
 
 This may come in use when `Mock` implementations need be shared between workspace crates.

@@ -3,7 +3,7 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-authors = ["gibbz"]
+authors = ["gibbz00 <gabrielhansson00@gmail.com>"]
 edition = "2021"
 exclude = ["/.github"]
 license = "MIT"
@@ -12,6 +12,7 @@ repository = "https://github.com/gibbz00/mock-default"
 version = "0.1.0"
 
 [workspace.dependencies]
+mock-default-macros = { path = "crates/macros" }
 
 [workspace.lints.rust]
 missing_docs = "deny"
@@ -21,6 +22,5 @@ unused_must_use = "deny"
 self_named_module_files = "deny"
 
 [profile.dev]
-# https://davidlattimore.github.io/posts/2024/02/04/speeding-up-the-rust-edit-build-run-cycle.html#avoid-linking-debug-info
 debug = 0
 strip = "debuginfo"

@@ -1,7 +1,8 @@
-use mock_default::Mock;
+use damock::Mock;
 
 #[derive(Debug, Default, PartialEq)]
 struct Bar(usize);
+
 impl Mock for Bar {
     fn mock() -> Self {
         Self(10)
@@ -10,6 +11,7 @@ impl Mock for Bar {
 
 #[derive(Debug, PartialEq)]
 struct Baz(usize);
+
 impl Mock for Baz {
     fn mock() -> Self {
         Self(20)

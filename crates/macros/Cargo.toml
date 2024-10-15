@@ -1,5 +1,5 @@
 [package]
-name = "mock-default-macros"
+name = "damock-macros"
 
 authors.workspace = true
 edition.workspace = true

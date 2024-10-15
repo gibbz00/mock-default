@@ -31,7 +31,7 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
         Ok(self_definition) => {
             quote! {
                 #cfg_scope
-                impl ::mock_default::Mock for #identifier {
+                impl ::damock::Mock for #identifier {
                     fn mock() -> Self {
                         #self_definition
                     }
@@ -167,7 +167,7 @@ mod fields {
             .any(|attribute| matches!(&attribute.meta, syn::Meta::Path(path) if path.is_ident("mock_default")))
         {
             true => quote! { Default::default() },
-            false => quote! { ::mock_default::Mock::mock() },
+            false => quote! { ::damock::Mock::mock() },
         }
     }
 }

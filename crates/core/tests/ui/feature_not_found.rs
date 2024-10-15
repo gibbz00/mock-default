@@ -1,4 +1,4 @@
-#[derive(mock_default::Mock)]
+#[derive(damock::Mock)]
 #[mock(feature = "mocks")]
 enum Foo {
     #[mock]

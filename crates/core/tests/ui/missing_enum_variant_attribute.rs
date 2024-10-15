@@ -1,4 +1,4 @@
-#[derive(mock_default::Mock)]
+#[derive(damock::Mock)]
 enum Foo {
     Bar,
     Baz,

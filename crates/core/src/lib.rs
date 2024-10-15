@@ -1,4 +1,4 @@
-//! mock-default commons.
+//! damock commons.
 
 /// Mocking trait for composable test values.
 ///
@@ -18,4 +18,4 @@ impl Mock for () {
     fn mock() -> Self {}
 }
 
-pub use mock_default_macros::Mock;
+pub use damock_macros::Mock;

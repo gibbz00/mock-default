@@ -16,5 +16,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Build setup
         uses: ./.github/actions/build_setup
-      - name: Publish the respective crates
-        run: cargo publish
+      - name: Publish damock-macros
+        run: cargo publish --package damock-macros
+      - name: Publish rops cli
+        run: cargo publish --package damock

@@ -4,7 +4,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, spanned::Spanned, Data, DeriveInput, Fields, FieldsNamed};
 
-/// Derives [`Mock`] for a struct if all of its fields implement `Mock`.
+/// Derives `Mock` for both structs and enums if all their fields implement either `Mock` or
+/// `Default`.
 #[proc_macro_derive(Mock, attributes(mock, mock_default))]
 pub fn derive_mock(token_stream: TokenStream) -> TokenStream {
     derive_mock_impl(token_stream)

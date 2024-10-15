@@ -1,10 +1,10 @@
-//! damock commons.
+#![doc = include_str!("../../../README.md")]
 
-/// Mocking trait for composable test values.
+/// Trait for composable mock data.
 ///
-/// Similar to [`std::default::Default`]
+/// Similar to [`std::default::Default`], but for tests.
 pub trait Mock: Sized {
-    /// Returns `Self` containing a non-random and valid test value
+    /// Returns `Self` containing a non-random test value
     fn mock() -> Self;
 }
 

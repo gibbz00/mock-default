@@ -18,5 +18,5 @@ jobs:
         uses: ./.github/actions/build_setup
       - name: Publish damock-macros
         run: cargo publish --package damock-macros
-      - name: Publish rops cli
+      - name: Publish damock
         run: cargo publish --package damock

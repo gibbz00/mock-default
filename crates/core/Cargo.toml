@@ -2,8 +2,10 @@
 name = "damock"
 
 authors.workspace = true
+description.workspace = true
 edition.workspace = true
 exclude.workspace = true
+keywords.workspace = true
 readme.workspace = true
 repository.workspace = true
 version.workspace = true

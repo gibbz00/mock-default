@@ -4,8 +4,10 @@ resolver = "2"
 
 [workspace.package]
 authors = ["gibbz00 <gabrielhansson00@gmail.com>"]
+description = "Derivable data mocking for tests"
 edition = "2021"
 exclude = ["/.github"]
+keywords = ["derive", "mocking", "testing"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/gibbz00/damock"

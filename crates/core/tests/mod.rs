@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use damock::Mock;
 
 #[derive(Debug, Default, PartialEq)]

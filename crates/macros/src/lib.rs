@@ -17,55 +17,59 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
 
     match type_definition.data {
         Data::Struct(struct_data) => match struct_data.fields {
-            Fields::Named(named_fields) => derive_struct_named(identifier, named_fields),
-            Fields::Unnamed(tuple_fields) => derive_struct_tuple(identifier, tuple_fields),
-            Fields::Unit => derive_unit_struct(identifier),
+            Fields::Named(named_fields) => structs::derive_named(identifier, named_fields),
+            Fields::Unnamed(tuple_fields) => structs::derive_tuple(identifier, tuple_fields),
+            Fields::Unit => structs::derive_unit(identifier),
         },
         Data::Enum(_) => todo!(),
         Data::Union(_) => todo!(),
     }
 }
 
-fn derive_struct_named(identifier: syn::Ident, named_fields: FieldsNamed) -> TokenStream {
-    let field_names = named_fields
-        .named
-        .into_iter()
-        .map(|field| field.ident.expect("encountered named field without an identifier"));
+mod structs {
+    use super::*;
 
-    let fields = field_names.map(|field_name| quote! { #field_name: ::mock_default::Mock::mock() });
+    pub fn derive_named(identifier: syn::Ident, named_fields: FieldsNamed) -> TokenStream {
+        let field_names = named_fields
+            .named
+            .into_iter()
+            .map(|field| field.ident.expect("encountered named field without an identifier"));
 
-    quote! {
-        impl ::mock_default::Mock for #identifier {
-            fn mock() -> Self {
-                Self {
-                    #(#fields),*
+        let fields = field_names.map(|field_name| quote! { #field_name: ::mock_default::Mock::mock() });
+
+        quote! {
+            impl ::mock_default::Mock for #identifier {
+                fn mock() -> Self {
+                    Self {
+                        #(#fields),*
+                    }
                 }
             }
         }
+        .into()
     }
-    .into()
-}
 
-fn derive_struct_tuple(identifier: syn::Ident, tuple_fields: syn::FieldsUnnamed) -> TokenStream {
-    let fields = tuple_fields.unnamed.iter().map(|_| quote! { ::mock_default::Mock::mock() });
+    pub fn derive_tuple(identifier: syn::Ident, tuple_fields: syn::FieldsUnnamed) -> TokenStream {
+        let fields = tuple_fields.unnamed.iter().map(|_| quote! { ::mock_default::Mock::mock() });
 
-    quote! {
-        impl ::mock_default::Mock for #identifier {
-            fn mock() -> Self {
-                Self(#(#fields),*)
+        quote! {
+            impl ::mock_default::Mock for #identifier {
+                fn mock() -> Self {
+                    Self(#(#fields),*)
+                }
             }
         }
+        .into()
     }
-    .into()
-}
 
-fn derive_unit_struct(identifier: syn::Ident) -> TokenStream {
-    quote! {
-        impl ::mock_default::Mock for #identifier {
-            fn mock() -> Self {
-                Self
+    pub fn derive_unit(identifier: syn::Ident) -> TokenStream {
+        quote! {
+            impl ::mock_default::Mock for #identifier {
+                fn mock() -> Self {
+                    Self
+                }
             }
         }
+        .into()
     }
-    .into()
 }

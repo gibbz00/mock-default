@@ -18,7 +18,7 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
     match type_definition.data {
         Data::Struct(struct_data) => match struct_data.fields {
             Fields::Named(named_fields) => derive_struct_named(identifier, named_fields),
-            Fields::Unnamed(_) => todo!(),
+            Fields::Unnamed(tuple_fields) => derive_struct_tuple(identifier, tuple_fields),
             Fields::Unit => todo!(),
         },
         Data::Enum(_) => todo!(),
@@ -40,6 +40,19 @@ fn derive_struct_named(identifier: syn::Ident, named_fields: FieldsNamed) -> Tok
                 Self {
                     #(#fields),*
                 }
+            }
+        }
+    }
+    .into()
+}
+
+fn derive_struct_tuple(identifier: syn::Ident, tuple_fields: syn::FieldsUnnamed) -> TokenStream {
+    let fields = tuple_fields.unnamed.iter().map(|_| quote! { ::mock_default::Mock::mock() });
+
+    quote! {
+        impl ::mock_default::Mock for #identifier {
+            fn mock() -> Self {
+                Self(#(#fields),*)
             }
         }
     }

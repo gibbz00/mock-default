@@ -1,0 +1,5 @@
+error: no #[mock] attribute found in any of the listed variants
+ --> tests/ui/missing_enum_variant_attribute.rs:2:1
+  |
+2 | enum Foo {
+  | ^^^^

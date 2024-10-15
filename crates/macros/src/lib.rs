@@ -5,7 +5,7 @@ use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields, FieldsNamed};
 
 /// Derives [`Mock`] for a struct if all of its fields implement `Mock`.
-#[proc_macro_derive(Mock)]
+#[proc_macro_derive(Mock, attributes(mock))]
 pub fn derive_mock(token_stream: TokenStream) -> TokenStream {
     derive_mock_impl(token_stream)
 }
@@ -15,61 +15,113 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
 
     let identifier = type_definition.ident;
 
-    match type_definition.data {
-        Data::Struct(struct_data) => match struct_data.fields {
-            Fields::Named(named_fields) => structs::derive_named(identifier, named_fields),
-            Fields::Unnamed(tuple_fields) => structs::derive_tuple(identifier, tuple_fields),
-            Fields::Unit => structs::derive_unit(identifier),
-        },
-        Data::Enum(_) => todo!(),
+    let self_definition_result = match type_definition.data {
+        Data::Struct(data_struct) => derive_struct(data_struct),
+        Data::Enum(data_enum) => derive_enum(data_enum),
         Data::Union(_) => todo!(),
+    };
+
+    match self_definition_result {
+        Ok(self_definition) => {
+            quote! {
+                impl ::mock_default::Mock for #identifier {
+                    fn mock() -> Self {
+                        #self_definition
+                    }
+                }
+            }
+        }
+        Err(err) => err.to_compile_error(),
     }
+    .into()
 }
 
-mod structs {
+mod fields {
     use super::*;
 
-    pub fn derive_named(identifier: syn::Ident, named_fields: FieldsNamed) -> TokenStream {
+    pub fn named(named_fields: FieldsNamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
         let field_names = named_fields
             .named
             .into_iter()
             .map(|field| field.ident.expect("encountered named field without an identifier"));
 
-        let fields = field_names.map(|field_name| quote! { #field_name: ::mock_default::Mock::mock() });
+        field_names.map(|field_name| quote! { #field_name: ::mock_default::Mock::mock() })
+    }
 
-        quote! {
-            impl ::mock_default::Mock for #identifier {
-                fn mock() -> Self {
-                    Self {
-                        #(#fields),*
-                    }
+    pub fn tuple(tuple_fields: syn::FieldsUnnamed) -> impl Iterator<Item = proc_macro2::TokenStream> {
+        tuple_fields.unnamed.into_iter().map(|_| quote! { ::mock_default::Mock::mock() })
+    }
+}
+
+fn derive_struct(data_struct: syn::DataStruct) -> syn::Result<proc_macro2::TokenStream> {
+    Ok(match data_struct.fields {
+        Fields::Named(named_fields) => {
+            let fields = fields::named(named_fields);
+
+            quote! {
+                Self {
+                    #(#fields),*
                 }
             }
         }
-        .into()
+        Fields::Unnamed(tuple_fields) => {
+            let fields = fields::tuple(tuple_fields);
+
+            quote! { Self(#(#fields),*) }
+        }
+        Fields::Unit => quote! { Self },
+    })
+}
+
+fn derive_enum(data_enum: syn::DataEnum) -> syn::Result<proc_macro2::TokenStream> {
+    let mut variant_to_mock_iter = data_enum.variants.into_iter().filter_map(|variant| {
+        variant
+            .attrs
+            .clone()
+            .iter()
+            .find(|attribute| match &attribute.meta {
+                syn::Meta::Path(path) => path.get_ident().is_some_and(|ident| &ident.to_string() == "mock"),
+                _ => false,
+            })
+            .map(|_| variant)
+    });
+
+    let Some(variant_to_mock) = variant_to_mock_iter.next() else {
+        return Err(syn::Error::new(
+            data_enum.enum_token.span,
+            "no #[mock] attribute found in any of the listed variants",
+        ));
+    };
+
+    if let Some(_another_variant_to_mock) = variant_to_mock_iter.next() {
+        return Err(syn::Error::new(
+            data_enum.enum_token.span,
+            "expected only one #[mock] enum variant attribute, unable to infer which one to use.",
+        ));
     }
 
-    pub fn derive_tuple(identifier: syn::Ident, tuple_fields: syn::FieldsUnnamed) -> TokenStream {
-        let fields = tuple_fields.unnamed.iter().map(|_| quote! { ::mock_default::Mock::mock() });
+    let variant_name = variant_to_mock.ident;
 
-        quote! {
-            impl ::mock_default::Mock for #identifier {
-                fn mock() -> Self {
-                    Self(#(#fields),*)
+    Ok(match variant_to_mock.fields {
+        Fields::Named(named_fields) => {
+            let fields = fields::named(named_fields);
+
+            quote! {
+                Self::#variant_name {
+                    #(#fields),*
                 }
             }
         }
-        .into()
-    }
-
-    pub fn derive_unit(identifier: syn::Ident) -> TokenStream {
-        quote! {
-            impl ::mock_default::Mock for #identifier {
-                fn mock() -> Self {
-                    Self
-                }
+        Fields::Unnamed(tuple_fields) => {
+            let fields = fields::tuple(tuple_fields);
+            quote! {
+                Self::#variant_name(#(#fields),*)
             }
         }
-        .into()
-    }
+        Fields::Unit => {
+            quote! {
+                Self::#variant_name
+            }
+        }
+    })
 }

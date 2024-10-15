@@ -1,0 +1,14 @@
+[package]
+name = "mock-default-common"
+
+authors.workspace = true
+edition.workspace = true
+exclude.workspace = true
+readme.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]

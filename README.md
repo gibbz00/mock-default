@@ -40,7 +40,8 @@ impl Mock for Foo {
 
 Toy application:
 
-```rust,ignore
+```no_compile
+#[test]
 fn computes_data() {
   let actual = compute(DataInput::mock());
   assert_eq!(DataOutput::mock(), actual);

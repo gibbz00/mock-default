@@ -12,6 +12,7 @@ There are some things that should be kept in mind when contributing to this proj
 * [`typos-lsp`](https://github.com/tekumara/typos-lsp)
 * [`taplo`](https://github.com/tamasfe/taplo)
 * [`rust-analyzer`](https://github.com/rust-lang/rust-analyzer)
+
 ### Using pre-commit hooks
 
 This project makes use of [`pre-commit`](https://pre-commit.com/) hooks. A `pre-commit install` is recommended once the repository has been cloned, unless it has been [auto-enabled](https://pre-commit.com/#automatically-enabling-pre-commit-on-repositories).
@@ -24,15 +25,11 @@ Pretty standard procedure apart from noting that some tests may be behind featur
 cargo test --all-features
 ```
 
-
-
 ### Generating and opening documentation
 
 ```sh
 cargo doc --no-deps --all-features --open
 ```
-
-
 
 ## Release (for maintainers)
 

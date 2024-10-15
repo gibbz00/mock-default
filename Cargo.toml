@@ -12,7 +12,7 @@ repository = "https://github.com/gibbz00/damock"
 version = "0.1.0"
 
 [workspace.dependencies]
-damock-macros = { path = "crates/macros" }
+damock-macros = { path = "crates/macros", version = "0" }
 
 [workspace.lints.rust]
 missing_docs = "deny"

@@ -4,18 +4,26 @@
 [![codecov](https://img.shields.io/codecov/c/gh/gibbz00/damock?token=5lHDbjv0AQ&style=for-the-badge)](https://codecov.io/gh/gibbz00/damock)
 [![license](https://img.shields.io/github/license/gibbz00/damock.svg?style=for-the-badge)](https://github.com/gibbz00/damock/blob/main/LICENSE.md)
 
-```no_compile
+```rust
+# use damock::Mock;
 #[derive(Mock)]
 struct Foo {
     bar: Bar,
     #[mock_default]
     baz: u8
 }
+
+#[derive(Mock)]
+enum Bar {
+    #[mock]
+    A,
+    B,
+}
 ```
 
 Expands into:
 
-```no_compile
+```rust
 #[cfg(test)]
 impl Mock for Foo {
     fn mock() -> Self {
@@ -29,7 +37,7 @@ impl Mock for Foo {
 
 Toy application:
 
-```no_compile
+```rust
 #[test]
 fn computes_data() {
   let actual = compute(DataInput::mock());
@@ -39,10 +47,13 @@ fn computes_data() {
 
 The `test` compiler configuration may be overridden to something else like so:
 
-```no_compile
+```rust
+# use damock::Mock;
+# #[derive(Mock)]
+# struct Bar(#[mock_default] usize);
 #[derive(Mock)]
 #[mock(feature = "mocks")]
-struct Foo(Bar)
+struct Foo(Bar);
 ```
 
 This may come in use when `Mock` implementations need be shared between workspace crates.
